@@ -24,6 +24,30 @@ composer require raaabdullah1/meta-graph-errors
 
 Requires PHP 8.1 or newer. No other dependencies.
 
+## Laravel example
+
+```php
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Http;
+use MetaGraphErrors\MetaErrorClassifier;
+
+try {
+    Http::withToken($pageToken)
+        ->post("https://graph.facebook.com/v21.0/{$pageId}/feed", ['message' => $text])
+        ->throw();
+} catch (RequestException $e) {
+    $error = MetaErrorClassifier::fromResponse($e->response->json() ?? []);
+
+    if ($error->requiresReconnect()) {
+        // mark the connection as expired and ask the user to reconnect
+    } elseif ($error->shouldBackOff()) {
+        // release the job back to the queue with a delay
+    } else {
+        report($error->hint); // log it, or show it to the user
+    }
+}
+```
+
 ## What you get back
 
 `classify()` and `fromResponse()` return a `Classification`:
